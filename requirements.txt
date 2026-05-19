@@ -1,6 +1,6 @@
 streamlit
 pandas
 scikit-learn
-xgboost
+xgboost==1.7.3
 joblib
 openpyxl

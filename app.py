@@ -84,12 +84,12 @@ if st.button("Calculate Delinquency Risk"):
         'Account_Tenure': [account_tenure],
         'Credit_Card_Type': [card_type],
         'Location': [location],
-        'Month_1': [months[0]],
-        'Month_2': [months[1]],
-        'Month_3': [months[2]],
-        'Month_4': [months[3]],
-        'Month_5': [months[4]],
-        'Month_6': [months[5]]
+        'Month_1 ': [months[0]],
+        'Month_2 ': [months[1]],
+        'Month_3 ': [months[2]],
+        'Month_4 ': [months[3]],
+        'Month_5 ': [months[4]],
+        'Month_6 ': [months[5]]
     }
     
     input_df = pd.DataFrame(input_dict)

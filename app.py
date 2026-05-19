@@ -2,10 +2,10 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Set the page configuration for a modern look
+# Set the page configuration
 st.set_page_config(page_title="Geldium Credit Risk AI", page_icon="🏦", layout="wide")
 
-# Custom CSS for styling
+# Custom CSS
 st.markdown("""
     <style>
     .main {background-color: #f8f9fa;}
@@ -19,19 +19,18 @@ st.markdown("""
 
 # App Header
 st.title("🏦 Geldium Proactive Collections AI")
-st.markdown("Predict customer delinquency risk using an advanced XGBoost model. Adjust the financial parameters below to simulate a risk profile.")
+st.markdown("Predict customer delinquency risk using an advanced XGBoost model.")
 st.divider()
 
 # Load the trained pipeline
 @st.cache_resource
 def load_model():
-    # Make sure 'credit_risk_model.pkl' is in the same folder as this script
     return joblib.load('credit_risk_model.pkl')
 
 try:
     model = load_model()
 except Exception as e:
-    st.error("⚠️ Model file not found. Please ensure 'credit_risk_model.pkl' is uploaded to the same directory.")
+    st.error("⚠️ Model file not found. Please ensure 'credit_risk_model.pkl' is uploaded.")
     st.stop()
 
 # --- UI LOGIC: Input Forms ---
@@ -71,7 +70,8 @@ for i, c in enumerate(hist_cols):
 # --- PREDICTION LOGIC ---
 st.divider()
 if st.button("Calculate Delinquency Risk"):
-    # Build the dataframe exactly how the model expects it
+    
+    # 1. Build the dataframe
     input_dict = {
         'Age': [age],
         'Income': [income],
@@ -95,27 +95,37 @@ if st.button("Calculate Delinquency Risk"):
     input_df = pd.DataFrame(input_dict)
     
     with st.spinner("Analyzing risk profile..."):
-        # Predict probability of class 1 (Delinquent)
-        probability = model.predict_proba(input_df)[0][1] * 100
-        
-        # Display Results
-        st.subheader("Risk Assessment Results")
-        
-        col_res1, col_res2 = st.columns([1, 2])
-        
-        with col_res1:
-            st.metric(label="Default Probability", value=f"{probability:.1f}%")
+        try:
+            # 2. THE FAILSAFE: Force the web app columns to match the model's memory exactly
+            if hasattr(model, "feature_names_in_"):
+                expected_cols = list(model.feature_names_in_)
+                if len(expected_cols) == len(input_df.columns):
+                    input_df.columns = expected_cols # Renames columns to bypass hidden spaces
             
-            if probability < 30:
-                st.markdown("<p class='risk-low'>✅ LOW RISK</p>", unsafe_allow_html=True)
-                st.write("Account is healthy. Standard monitoring applies.")
-            elif probability < 65:
-                st.markdown("<p class='risk-medium'>⚠️ MEDIUM RISK</p>", unsafe_allow_html=True)
-                st.write("Early warning signs detected. Consider sending proactive educational materials.")
-            else:
-                st.markdown("<p class='risk-high'>🚨 HIGH RISK</p>", unsafe_allow_html=True)
-                st.write("Action Required: Trigger proactive restructuring offer immediately.")
+            # 3. Make Prediction
+            probability = model.predict_proba(input_df)[0][1] * 100
+            
+            # 4. Display Results
+            st.subheader("Risk Assessment Results")
+            col_res1, col_res2 = st.columns([1, 2])
+            
+            with col_res1:
+                st.metric(label="Default Probability", value=f"{probability:.1f}%")
                 
-        with col_res2:
-            st.progress(probability / 100)
-            st.write("**AI Recommendation:** Based on the current risk threshold, the system flags changes in Credit Utilization and DTI as primary catalysts. To test this, try lowering the Credit Utilization slider and recalculating.")
+                if probability < 30:
+                    st.markdown("<p class='risk-low'>✅ LOW RISK</p>", unsafe_allow_html=True)
+                    st.write("Account is healthy. Standard monitoring applies.")
+                elif probability < 65:
+                    st.markdown("<p class='risk-medium'>⚠️ MEDIUM RISK</p>", unsafe_allow_html=True)
+                    st.write("Early warning signs detected. Consider sending proactive educational materials.")
+                else:
+                    st.markdown("<p class='risk-high'>🚨 HIGH RISK</p>", unsafe_allow_html=True)
+                    st.write("Action Required: Trigger proactive restructuring offer immediately.")
+                    
+            with col_res2:
+                st.progress(probability / 100)
+                st.write("**AI Recommendation:** Based on the current risk threshold, the system flags changes in Credit Utilization and DTI as primary catalysts. To test this, try lowering the Credit Utilization slider and recalculating.")
+                
+        except Exception as e:
+            # If it still fails, this will print the EXACT reason on your screen so we can fix it.
+            st.error(f"🚨 Calculation Error: {e}")

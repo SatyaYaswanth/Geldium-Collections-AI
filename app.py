@@ -30,7 +30,7 @@ def load_model():
 try:
     model = load_model()
 except Exception as e:
-    st.error("⚠️ Model file not found. Please ensure 'credit_risk_model.pkl' is uploaded.")
+    st.error(f"⚠️ Failed to load the model. The actual Python error is: {e}")
     st.stop()
 
 # --- UI LOGIC: Input Forms ---
